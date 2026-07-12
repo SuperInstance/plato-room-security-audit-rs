@@ -1,0 +1,22 @@
+[package]
+name = "si-security-audit-room"
+version = "0.1.0"
+edition = "2021"
+description = "PLATO Security Audit Room — automated security auditing as a Rust engine block"
+license = "MIT"
+repository = "https://github.com/SuperInstance/plato-room-security-audit-rs"
+homepage = "https://github.com/SuperInstance/plato-room-security-audit-rs"
+keywords = ["security", "audit", "plato", "superinstance", "vulnerability"]
+categories = ["development-tools", "security"]
+
+[lib]
+name = "si_security_audit_room"
+path = "src/lib.rs"
+
+[dependencies]
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+# tests use the library directly — no extra deps needed

@@ -1,27 +1,47 @@
-# PLATO Security Audit Room (Rust)
+# 🔒 PLATO Security Audit Room (Rust)
 
-> Automated security auditing as a **PLATO engine block** — Rust port of the [Python plato-room-security-audit](https://github.com/SuperInstance/plato-room-security-audit).
+![Crates.io](https://img.shields.io/crates/v/si-security-audit-room)
+![Rust](https://img.shields.io/badge/rust-stable-orange)
+![Tests](https://img.shields.io/badge/tests-64%2B-brightgreen)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)](https://www.rust-lang.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+> Automated security auditing as a **PLATO engine block** — heuristic vulnerability scanning of code diffs, packaged as a Room with sensors, actuators, and alarms.
 
-## What is this?
+A Rust implementation of the PLATO Security Audit Room. Scans code diffs for 13 vulnerability classes using fast, deterministic, pattern-based heuristics. No LLM, no AST parsing, no network calls required. Includes a full PLATO room protocol implementation with JSON wire format.
 
-A Rust implementation of the PLATO Security Audit Room that scans code diffs for vulnerability patterns. It provides:
+Rust port of the [Python plato-room-security-audit](https://github.com/SuperInstance/plato-room-security-audit).
 
-- **Heuristic security scanner** — SQL injection, XSS, path traversal, hardcoded secrets, command injection, and more
+---
+
+## Philosophy
+
+Part of [Working Animal Architecture](https://github.com/SuperInstance/AI-Writings), where **γ + η = C** (genome + nurture = capability). The security audit room is the **guard dog** — a working animal that patrols the fence. It doesn't need to understand the whole codebase; it just needs to recognize the patterns of intrusion. Fast, tireless, and consistent.
+
+> *The guard dog doesn't need to be smart. It needs to be awake.*
+
+## What Is This?
+
+A Rust library that combines:
+
+- **Heuristic security scanner** — SQL injection, XSS, path traversal, hardcoded secrets, command injection, and 8 more
 - **PLATO room protocol** — sensors, alarms, actuators, tick loop, and JSON wire protocol
-- **Report generation** — Markdown and JSON security audit reports with severity ratings
+- **Report generation** — Markdown and JSON security audit reports with severity ratings (CWE-mapped)
 - **Zero external services** — No LLM, no AST parsing, no network calls required
 
-## Quick Start
+## Installation
 
-### Add to your project
+```bash
+cargo add si-security-audit-room
+```
+
+Or in `Cargo.toml`:
 
 ```toml
 [dependencies]
 si-security-audit-room = "0.1"
 ```
+
+## Quick Start
 
 ### Scan a diff
 
@@ -41,7 +61,7 @@ let report = generate_report(&results, Some("owner/repo"), Some(42), Some("alice
 println!("{report}");
 ```
 
-### Use the room protocol
+### Use the PLATO room protocol
 
 ```rust
 use si_security_audit_room::SecurityAuditRoom;
@@ -70,16 +90,16 @@ let json = generate_json_report(&results, Some("owner/repo"), Some(42), None);
 
 ## Security Checks
 
-All checks are **heuristic** (pattern-based) — fast, deterministic, and auditable.
+All checks are **heuristic** (pattern-based) — fast, deterministic, and auditable. No false negatives from AST parsing failures, no API rate limits.
 
-| Check | What it catches | Severity | CWE |
+| Check | What It Catches | Severity | CWE |
 |-------|----------------|----------|-----|
-| `sql_injection` | String concatenation in SQL execute() calls, f-string queries | critical | CWE-89 |
-| `xss` | Unescaped output in templates, `innerHTML` with variables | critical | CWE-79 |
-| `path_traversal` | `../` patterns in file paths, unsanitized `open()` calls | critical | CWE-22 |
-| `hardcoded_secrets` | AWS keys, API keys, private keys, JWTs, Slack tokens, DB URLs | critical | CWE-798 |
-| `command_injection` | `os.system()`, `subprocess` with `shell=True`, `eval()` with user input | critical | CWE-78 |
-| `critical_eval` | `eval()`/`exec()` with user input | critical | CWE-95 |
+| `sql_injection` | String concatenation in SQL execute() calls, f-string queries | **critical** | CWE-89 |
+| `xss` | Unescaped output in templates, `innerHTML` with variables | **critical** | CWE-79 |
+| `path_traversal` | `../` patterns in file paths, unsanitized `open()` calls | **critical** | CWE-22 |
+| `hardcoded_secrets` | AWS keys, API keys, private keys, JWTs, Slack tokens, DB URLs | **critical** | CWE-798 |
+| `command_injection` | `os.system()`, `subprocess` with `shell=True`, `eval()` with user input | **critical** | CWE-78 |
+| `critical_eval` | `eval()`/`exec()` with user input | **critical** | CWE-95 |
 | `insecure_random` | `random` module for security-sensitive contexts | error | CWE-330 |
 | `insecure_crypto` | MD5, SHA1, DES, ECB mode for crypto operations | error | CWE-327 |
 | `debug_enabled` | `DEBUG = True` in settings files | warning | CWE-489 |
@@ -87,6 +107,79 @@ All checks are **heuristic** (pattern-based) — fast, deterministic, and audita
 | `disabled_security` | Comments disabling security checks, `# noqa`, `@SuppressWarnings` | warning | CWE-693 |
 | `sensitive_file_exposure` | Changes to `.env`, secrets files, key files | error | CWE-200 |
 | `weak_password_hash` | `hashlib.md5`/`sha1` for password hashing | error | CWE-916 |
+
+### Severity Levels
+
+| Level | Meaning |
+|-------|---------|
+| **critical** | Exploitable vulnerability — block merge immediately |
+| **error** | Security weakness — should fix before merge |
+| **warning** | Best-practice violation — review recommended |
+| **info** | Informational — no action required |
+
+## API Reference
+
+### `scanner` Module
+
+| Function | Description |
+|----------|-------------|
+| `run_all_checks(diff)` | Run all 13 security checks on a diff |
+| `run_check(check_id, diff)` | Run a single named check |
+| `check_sql_injection(diff)` | Individual check functions for each CWE |
+| `check_xss(diff)` | ... |
+| `check_path_traversal(diff)` | ... |
+
+**Types:**
+
+| Type | Fields |
+|------|--------|
+| `CheckResult` | `check_id`, `severity`, `findings: Vec<Finding>`, `count` |
+| `Severity` | `Critical`, `Error`, `Warning`, `Info` |
+
+### `report` Module
+
+| Function | Description |
+|----------|-------------|
+| `generate_report(results, repo, pr, author)` | Full Markdown security report |
+| `generate_short_summary(results)` | One-line summary (for PR comments) |
+| `generate_json_report(results, repo, pr, author)` | JSON report for API consumption |
+
+### `SecurityAuditRoom`
+
+| Method | Description |
+|--------|-------------|
+| `new(diff, host, port)` | Create room with a diff to monitor |
+| `empty()` | Create room with no diff (sensors return zeros) |
+| `tick()` | Execute one sensor sweep |
+| `handle_command(line)` | Handle a PLATO wire protocol command |
+| `process_alarms()` | Evaluate alarms, dispatch actuators |
+
+### Room Sensors
+
+| Sensor | What It Measures |
+|--------|-----------------|
+| `vuln_patterns` | Count of vulnerability findings |
+| `secret_scan` | Count of hardcoded secrets detected |
+| `risk_score` | Aggregate risk score (0–100) |
+
+### Room Alarms
+
+| Alarm | Condition | Cooldown |
+|-------|-----------|----------|
+| `sql_injection` | vuln_patterns > 0 (SQL injection class) | 30s |
+| `xss_detected` | vuln_patterns > 0 (XSS class) | 30s |
+| `path_traversal` | vuln_patterns > 0 (path traversal class) | 30s |
+| `hardcoded_secrets` | secret_scan > 0 | 60s |
+| `command_injection` | vuln_patterns > 0 (command injection class) | 30s |
+| `critical_eval` | vuln_patterns > 0 (eval/exec class) | 30s |
+
+### Room Actuators
+
+| Actuator | Action |
+|----------|--------|
+| `post_audit` | Post audit report as PR comment |
+| `block_merge` | Block the pull request merge |
+| `apply_label` | Apply a security label to the PR |
 
 ## Architecture
 
@@ -119,7 +212,7 @@ All checks are **heuristic** (pattern-based) — fast, deterministic, and audita
     └─────────────────────────────────────────────┘
 ```
 
-## PLATO Room Protocol
+## PLATO Wire Protocol
 
 The room implements the standard PLATO wire protocol:
 
@@ -128,60 +221,71 @@ The room implements the standard PLATO wire protocol:
 | `tick` | Execute one sensor sweep, evaluate alarms |
 | `history N` | Show last N tick records |
 | `alarm list` | List all alarms and their states |
-| `alarm set ID SENSOR,OP,THRESH COOLDOWN` | Register a new alarm |
+| `alarm set ID SENSOR OP THRESH COOLDOWN` | Register a new alarm |
 | `actuator NAME [VALUE]` | Trigger an actuator |
 | `subscribe` / `unsubscribe` | Subscribe to tick notifications |
 | `help` | Show available commands |
 | `quit` | Disconnect |
 
-## API Reference
-
-### `scanner` module
-
-- `run_all_checks(diff: &str) -> Vec<CheckResult>` — Run all security checks
-- `run_check(check_id: &str, diff: &str) -> Option<CheckResult>` — Run a single check
-- Individual checks: `check_sql_injection`, `check_xss`, `check_path_traversal`, `check_hardcoded_secrets`, `check_command_injection`, `check_critical_eval`, etc.
-
-### `report` module
-
-- `generate_report(results, repo, pr_number, author) -> String` — Full Markdown report
-- `generate_short_summary(results) -> String` — One-line summary
-- `generate_json_report(results, repo, pr_number, author) -> String` — JSON report
-
-### `SecurityAuditRoom`
-
-- `new(diff, host, port)` — Create room with a diff to monitor
-- `empty()` — Create room with no diff (sensors return zeros)
-- `tick()` — Execute one tick
-- `handle_command(line)` — Handle protocol command
-- `process_alarms()` — Process triggered alarms (actuator dispatch)
+Full spec: [PLATO_WIRE_PROTOCOL.md](https://github.com/SuperInstance/AI-Writings/blob/main/PLATO_WIRE_PROTOCOL.md)
 
 ## Testing
 
 ```bash
+# Run all 64 tests
 cargo test
+
+# Run with verbose output
+cargo test -- --nocapture
+
+# Run scanner tests only
+cargo test scanner::
+
+# Run report tests only
+cargo test report::
 ```
 
-All 64 tests use simulated data — no GitHub API calls needed.
+All tests use simulated diff data — no GitHub API calls or network access needed.
 
-## Differences from Python version
+## Differences from Python Version
 
 | Aspect | Python | Rust |
 |--------|--------|------|
-| Transport | Built-in TCP server | Library-only (bring your own transport) |
-| GitHub client | Included (`github_client.py`) | Bring your own (use `octocrab`, `reqwest`, etc.) |
-| Regex engine | Python `re` (supports lookahead) | Rust `regex` crate (no lookahead — uses post-filter for HTTP check) |
+| Transport | Built-in TCP server | **Library-only** (bring your own transport) |
+| GitHub client | Included (`github_client.py`) | Bring your own (`octocrab`, `reqwest`, etc.) |
+| Regex engine | Python `re` (supports lookahead) | Rust `regex` crate (no lookahead — post-filter for HTTP check) |
 | Concurrency | `threading` + `socketserver` | Single-threaded tick, easy to wrap in `tokio` |
 | FLUX policies | Loaded from `.flx` files | Hardcoded alarm definitions |
+| Checks | Same 13 patterns | Same 13 patterns, same heuristics |
+
+The Rust version is designed as a library crate, not a standalone server. This lets you embed it in CI pipelines, GitHub Actions, or async servers with your choice of runtime.
+
+## Cross-Implementation
+
+| Aspect | Python | Rust |
+|--------|--------|------|
+| Package | (source) | `cargo add si-security-audit-room` |
+| Repo | [plato-room-security-audit](https://github.com/SuperInstance/plato-room-security-audit) | [plato-room-security-audit-rs](https://github.com/SuperInstance/plato-room-security-audit-rs) (this) |
+| Check compatibility | 13 checks | Same 13 checks, same patterns |
+| Report format | Markdown + JSON | Markdown + JSON (same structure) |
+
+## Ecosystem
+
+### PLATO Protocol
+- [plato-core-rs](https://github.com/SuperInstance/plato-core-rs) — Core protocol types (Room, Sensor, Actuator, Alarm)
+- **plato-room-security-audit-rs** — This room (security scanning)
+
+### FLUX Policy Layer
+- [conservation-enforcer-rs](https://github.com/SuperInstance/conservation-enforcer-rs) — Conservation-law enforcement
+- [flux-registry-rs](https://github.com/SuperInstance/flux-registry-rs) — Policy registry CLI
+- [flux-policy-tester-rs](https://github.com/SuperInstance/flux-policy-tester-rs) — Policy testing framework
+
+### Cognitive Layer
+- [exocortex-rs](https://github.com/SuperInstance/exocortex-rs) — Multi-agent cognitive substrate
+
+### Theory
+- [AI-Writings](https://github.com/SuperInstance/AI-Writings) — Paradigm essays and protocol specs
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
-
-## Part of
-
-[SuperInstance](https://github.com/SuperInstance) — the PLATO ecosystem.
-
-### Related
-
-- **[plato-room-security-audit](https://github.com/SuperInstance/plato-room-security-audit)** — Original Python implementation
+MIT — see [LICENSE](LICENSE)
